@@ -49,8 +49,11 @@ import org.apache.commons.logging.LogFactory;
 import org.wso2.carbon.clustering.mesos.client.Marathon;
 import org.wso2.carbon.clustering.mesos.client.MesosDNS;
 import org.wso2.carbon.clustering.mesos.client.MesosDNSClient;
+import org.wso2.carbon.clustering.mesos.client.MesosIAM;
+import org.wso2.carbon.clustering.mesos.client.MesosIAMClient;
 import org.wso2.carbon.clustering.mesos.client.MesosMarathonClient;
 import org.wso2.carbon.clustering.mesos.client.model.dns.v1.MesosDNSSRVRecord;
+import org.wso2.carbon.clustering.mesos.client.model.iam.auth.Credentials;
 import org.wso2.carbon.clustering.mesos.client.model.marathon.v2.App;
 import org.wso2.carbon.clustering.mesos.client.model.marathon.v2.IpAddress;
 import org.wso2.carbon.clustering.mesos.client.model.marathon.v2.Port;
@@ -210,12 +213,16 @@ public class MesosMembershipScheme implements HazelcastMembershipScheme {
         return false;
     }
 
-    private void addMembersFromMesosMarathon() {
+    private void addMembersFromMesosMarathon() throws MesosException {
         log.info(String.format("Creating Mesos Marathon client using [Endpoint] %s, [Basic-Auth-Enabled] %s", marathonEndpoint,
                 enableBasicAuth));
         Marathon marathonClient;
         if (enableBasicAuth) {
             marathonClient = MesosMarathonClient.getInstanceWithBasicAuth(marathonEndpoint, marathonUsername, marathonPassword);
+        } else if (enableTokenAuth){
+            MesosIAM mesosIAMClient = MesosIAMClient.getInstance(iamEndpoint);
+            String token = mesosIAMClient.getToken(new Credentials(marathonUsername, marathonPassword)).getToken();
+            marathonClient = MesosMarathonClient.getInstanceWithBasicAuth(marathonEndpoint, marathonUsername, marathonPassword); //need to add token to header
         } else {
             marathonClient = MesosMarathonClient.getInstance(marathonEndpoint);
         }
