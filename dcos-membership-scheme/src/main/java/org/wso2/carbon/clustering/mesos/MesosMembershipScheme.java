@@ -15,32 +15,14 @@
 */
 package org.wso2.carbon.clustering.mesos;
 
-import static org.apache.commons.httpclient.HttpStatus.SC_NOT_FOUND;
-import static org.apache.commons.httpclient.HttpStatus.SC_REQUEST_TIMEOUT;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.CONNECTION_TIMEOUT;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.DEFAULT_DNS_UPDATE_TIMEOUT;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.DEFAULT_MARATHON_ENDPOINT;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.DEFAULT_MESOS_DNS_ENDPOINT;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.DNS_RETRY_INTERVAL;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.DNS_UPDATE_TIMEOUT;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.ENABLE_BASIC_AUTH;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.IS_OVERLAY_NETWORK_AND_DOCKER;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_APPLICATIONS;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_APP_ID;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_ENDPOINT;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_PASSWORD;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_USERNAME;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.MESOS_DNS_DISCOVERY_SCHEME;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.MESOS_DNS_ENDPOINT;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.MESOS_MARATHON_DISCOVERY_SCHEME;
-import static org.wso2.carbon.clustering.mesos.MesosConstants.MESOS_MEMBER_DISCOVERY_SCHEME;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-
+import com.hazelcast.config.Config;
+import com.hazelcast.config.NetworkConfig;
+import com.hazelcast.config.TcpIpConfig;
+import com.hazelcast.core.HazelcastInstance;
+import com.hazelcast.core.Member;
+import com.hazelcast.core.MemberAttributeEvent;
+import com.hazelcast.core.MembershipEvent;
+import com.hazelcast.core.MembershipListener;
 import org.apache.axis2.clustering.ClusteringFault;
 import org.apache.axis2.clustering.ClusteringMessage;
 import org.apache.axis2.description.Parameter;
@@ -64,14 +46,34 @@ import org.wso2.carbon.core.clustering.hazelcast.HazelcastMembershipScheme;
 import org.wso2.carbon.core.clustering.hazelcast.HazelcastUtil;
 import org.wso2.carbon.utils.xml.StringUtils;
 
-import com.hazelcast.config.Config;
-import com.hazelcast.config.NetworkConfig;
-import com.hazelcast.config.TcpIpConfig;
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.Member;
-import com.hazelcast.core.MemberAttributeEvent;
-import com.hazelcast.core.MembershipEvent;
-import com.hazelcast.core.MembershipListener;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+
+import static org.apache.commons.httpclient.HttpStatus.SC_NOT_FOUND;
+import static org.apache.commons.httpclient.HttpStatus.SC_REQUEST_TIMEOUT;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.CONNECTION_TIMEOUT;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.DEFAULT_DNS_UPDATE_TIMEOUT;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.DEFAULT_MARATHON_ENDPOINT;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.DEFAULT_MESOS_DNS_ENDPOINT;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.DEFAULT_MESOS_IAM_ENDPOINT;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.DNS_RETRY_INTERVAL;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.DNS_UPDATE_TIMEOUT;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.ENABLE_BASIC_AUTH;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.ENABLE_TOKEN_AUTH;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.IS_OVERLAY_NETWORK_AND_DOCKER;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_APPLICATIONS;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_APP_ID;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_ENDPOINT;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_PASSWORD;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_USERNAME;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.MESOS_DNS_DISCOVERY_SCHEME;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.MESOS_DNS_ENDPOINT;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.MESOS_IAM_ENDPOINT;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.MESOS_MARATHON_DISCOVERY_SCHEME;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.MESOS_MEMBER_DISCOVERY_SCHEME;
 
 /**
  * Mesos membership scheme provides cluster discovery for WSO2 Carbon servers on
@@ -90,9 +92,11 @@ public class MesosMembershipScheme implements HazelcastMembershipScheme {
     private String memberDiscoveryScheme;
     private String marathonEndpoint;
     private boolean enableBasicAuth;
+    private boolean enableTokenAuth;
     private String marathonUsername;
     private String marathonPassword;
     private String mesosDNSEndpoint;
+    private String mesosIAMEndpoint;
     private boolean isOverlayNetwork;
     private int dnsUpdateTimeout;
 
@@ -219,10 +223,10 @@ public class MesosMembershipScheme implements HazelcastMembershipScheme {
         Marathon marathonClient;
         if (enableBasicAuth) {
             marathonClient = MesosMarathonClient.getInstanceWithBasicAuth(marathonEndpoint, marathonUsername, marathonPassword);
-        } else if (enableTokenAuth){
-            MesosIAM mesosIAMClient = MesosIAMClient.getInstance(iamEndpoint);
+        } else if (enableTokenAuth) {
+            MesosIAM mesosIAMClient = MesosIAMClient.getInstance(mesosIAMEndpoint);
             String token = mesosIAMClient.getToken(new Credentials(marathonUsername, marathonPassword)).getToken();
-            marathonClient = MesosMarathonClient.getInstanceWithBasicAuth(marathonEndpoint, marathonUsername, marathonPassword); //need to add token to header
+            marathonClient = MesosMarathonClient.getInstanceWithBasicAuth(marathonEndpoint, marathonUsername, marathonPassword); //TODO: need to add token to header
         } else {
             marathonClient = MesosMarathonClient.getInstance(marathonEndpoint);
         }
@@ -327,9 +331,11 @@ public class MesosMembershipScheme implements HazelcastMembershipScheme {
         memberDiscoveryScheme = getParameterValue(MESOS_MEMBER_DISCOVERY_SCHEME, MESOS_MARATHON_DISCOVERY_SCHEME);
         marathonEndpoint = getParameterValue(MARATHON_ENDPOINT, DEFAULT_MARATHON_ENDPOINT);
         enableBasicAuth = Boolean.parseBoolean(getParameterValue(ENABLE_BASIC_AUTH, Boolean.FALSE.toString()));
+        enableTokenAuth = Boolean.parseBoolean(getParameterValue(ENABLE_TOKEN_AUTH, Boolean.FALSE.toString()));
         marathonUsername = getParameterValue(MARATHON_USERNAME, "");
         marathonPassword = getParameterValue(MARATHON_PASSWORD, "");
         mesosDNSEndpoint = getParameterValue(MESOS_DNS_ENDPOINT, DEFAULT_MESOS_DNS_ENDPOINT);
+        mesosIAMEndpoint = getParameterValue(MESOS_IAM_ENDPOINT, DEFAULT_MESOS_IAM_ENDPOINT);
         dnsUpdateTimeout = Integer.parseInt(getParameterValue(DNS_UPDATE_TIMEOUT, DEFAULT_DNS_UPDATE_TIMEOUT));
         marathonAppIdList = new ArrayList<>();
         isOverlayNetwork = Boolean.parseBoolean(getParameterValue(IS_OVERLAY_NETWORK_AND_DOCKER, Boolean.FALSE.toString()));
