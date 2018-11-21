@@ -22,16 +22,16 @@ public class Credentials {
     private String uid;
     private Integer exp;
     private String password;
-    private String token;
+    private String loginToken;
 
     public Credentials() {
 
     }
 
-    public Credentials(String uid, String password) {
+    public Credentials(String uid, String loginToken) {
 
         this.uid = uid;
-        this.password = password;
+        this.loginToken = loginToken;
     }
 
     public String getUId() {
@@ -66,12 +66,12 @@ public class Credentials {
 
     public String getToken() {
 
-        return token;
+        return loginToken;
     }
 
-    public void setToken(String token) {
+    public void setToken(String loginToken) {
 
-        this.token = token;
+        this.loginToken = loginToken;
     }
 
     @Override
