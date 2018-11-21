@@ -226,7 +226,7 @@ public class MesosMembershipScheme implements HazelcastMembershipScheme {
         } else if (enableTokenAuth) {
             MesosIAM mesosIAMClient = MesosIAMClient.getInstance(mesosIAMEndpoint);
             String token = mesosIAMClient.getToken(new Credentials(marathonUsername, marathonPassword)).getToken();
-            marathonClient = MesosMarathonClient.getInstanceWithBasicAuth(marathonEndpoint, marathonUsername, marathonPassword); //TODO: need to add token to header
+            marathonClient = MesosMarathonClient.getInstanceWithTokenAuth(marathonEndpoint,token);
         } else {
             marathonClient = MesosMarathonClient.getInstance(marathonEndpoint);
         }
