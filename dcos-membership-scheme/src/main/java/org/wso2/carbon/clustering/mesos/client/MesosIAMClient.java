@@ -42,6 +42,7 @@ public class MesosIAMClient {
      */
     public static MesosIAM getInstance(String endpoint, RequestInterceptor... interceptors) {
 
+        log.info("[***TESTING] > > > Building Mesos IAM API client...");
         Feign.Builder b = Feign.builder()
                 .encoder(new GsonEncoder(ModelUtils.GSON))
                 .logger(new Slf4jLogger())
@@ -60,7 +61,7 @@ public class MesosIAMClient {
         public void apply(RequestTemplate template) {
 
             if (log.isDebugEnabled()) {
-                log.debug(String.format("Mesos DNS [Request] %s", template.request()));
+                log.debug(String.format("Mesos IAM API [Request] %s", template.request()));
             }
         }
     }

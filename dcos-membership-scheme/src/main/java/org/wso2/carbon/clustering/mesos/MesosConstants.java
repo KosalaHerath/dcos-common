@@ -21,6 +21,7 @@ public class MesosConstants {
     public static final String MARATHON_APPLICATIONS = "MARATHON_APPLICATIONS";
     public static final String MARATHON_USERNAME = "MARATHON_USERNAME";
     public static final String MARATHON_PASSWORD = "MARATHON_PASSWORD";
+    public static final String MARATHON_LOGIN_TOKEN = "MARATHON_LOGIN_TOKEN";
     public static final String MARATHON_AUTHENTICATION_MODE = "MARATHON_AUTHENTICATION_MODE";  //TODO: add this parameter to axis2.xml file
     public static final String DEFAULT_MARATHON_AUTHENTICATION_MODE = "Basic";
     public static final String IS_OVERLAY_NETWORK_AND_DOCKER = "IS_OVERLAY_NETWORK_AND_DOCKER";

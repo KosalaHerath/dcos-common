@@ -67,6 +67,7 @@ import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_APPLICATI
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_APP_ID;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_AUTHENTICATION_MODE;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_ENDPOINT;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_LOGIN_TOKEN;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_PASSWORD;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_USERNAME;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MESOS_DNS_DISCOVERY_SCHEME;
@@ -94,6 +95,7 @@ public class MesosMembershipScheme implements HazelcastMembershipScheme {
     private String marathonEndpoint;
     private String marathonUsername;
     private String marathonPassword;
+    private String marathonLoginToken;
     private String marathonAuthMode;
     private String mesosDNSEndpoint;
     private String mesosIAMEndpoint;
@@ -230,13 +232,21 @@ public class MesosMembershipScheme implements HazelcastMembershipScheme {
                 marathonAuthMode));
         Marathon marathonClient;
         if (marathonAuthMode.equals("Basic")) {
+            log.info("[***TESTING] > > > Marathon Auth Mode : Basic Auth Selected");
             marathonClient = MesosMarathonClient.getInstanceWithBasicAuth(marathonEndpoint, marathonUsername, marathonPassword);
+            log.info("[***TESTING] > > > Marathon Client created with Basic Auth Successfully");
         } else if (marathonAuthMode.equals("Token")) {
+            log.info("[***TESTING] > > > Marathon Auth Mode : Token Auth Selected");
             MesosIAM mesosIAMClient = MesosIAMClient.getInstance(mesosIAMEndpoint);
-            String token = mesosIAMClient.getToken(new Credentials(marathonUsername, marathonPassword)).getToken();
+            log.info("[***TESTING] > > > IAM Client created Successfully");
+            String token = mesosIAMClient.getToken(new Credentials(marathonUsername, marathonLoginToken)).getToken();
+            log.info(String.format("[***TESTING] > > > IAM Token : %s", token));
             marathonClient = MesosMarathonClient.getInstanceWithTokenAuth(marathonEndpoint, token);
+            log.info("[***TESTING] > > > Marathon Client created with Token Auth Successfully");
         } else {
+            log.info("[***TESTING] > > > Marathon Auth Mode : null");
             marathonClient = MesosMarathonClient.getInstance(marathonEndpoint);
+            log.info("[***TESTING] > > > Marathon Client created with null Auth Successfully");
         }
         for (String marathonAppId : marathonAppIdList) {
             if (StringUtils.isEmpty(marathonAppId)) {
@@ -346,6 +356,7 @@ public class MesosMembershipScheme implements HazelcastMembershipScheme {
         marathonAuthMode = getParameterValue(MARATHON_AUTHENTICATION_MODE, DEFAULT_MARATHON_AUTHENTICATION_MODE);
         marathonUsername = getParameterValue(MARATHON_USERNAME, "");
         marathonPassword = getParameterValue(MARATHON_PASSWORD, "");
+        marathonLoginToken = getParameterValue(MARATHON_LOGIN_TOKEN, "");
         mesosDNSEndpoint = getParameterValue(MESOS_DNS_ENDPOINT, DEFAULT_MESOS_DNS_ENDPOINT);
         mesosIAMEndpoint = getParameterValue(MESOS_IAM_ENDPOINT, DEFAULT_MESOS_IAM_ENDPOINT);
         dnsUpdateTimeout = Integer.parseInt(getParameterValue(DNS_UPDATE_TIMEOUT, DEFAULT_DNS_UPDATE_TIMEOUT));
@@ -375,6 +386,8 @@ public class MesosMembershipScheme implements HazelcastMembershipScheme {
         log.info(String.format(
                 "Mesos clustering membership scheme configuration: [App-List] %s, [Local-AppId] %s, " + "[Discovery-Scheme] %s",
                 marathonAppIdList, localAppId, memberDiscoveryScheme));
+        log.info(String.format("[***TESTING] > > > [Mesos clustering membership scheme configuration: " +
+                "[Marathon-Auth-Mode] %s, [Marathon-Logging-Token] %s", marathonAuthMode, marathonLoginToken));
     }
 
     private String getParameterValue(String key, String def) {
