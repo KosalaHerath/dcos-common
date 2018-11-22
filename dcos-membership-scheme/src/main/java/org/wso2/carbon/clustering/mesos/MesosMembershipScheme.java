@@ -66,6 +66,8 @@ import static org.wso2.carbon.clustering.mesos.MesosConstants.IS_OVERLAY_NETWORK
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_APPLICATIONS;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_APP_ID;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_AUTHENTICATION_MODE;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_BASIC_AUTHENTICATION_MODE;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_TOKEN_AUTHENTICATION_MODE;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_ENDPOINT;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_LOGIN_TOKEN;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_PASSWORD;
@@ -231,11 +233,11 @@ public class MesosMembershipScheme implements HazelcastMembershipScheme {
         log.info(String.format("Creating Mesos Marathon client using [Endpoint] %s, [Marathon-Auth-Mode] %s", marathonEndpoint,
                 marathonAuthMode));
         Marathon marathonClient;
-        if (marathonAuthMode.equals("Basic")) {
+        if (MARATHON_BASIC_AUTHENTICATION_MODE.equals(marathonAuthMode)) {
             log.info("[***TESTING] > > > Marathon Auth Mode : Basic Auth Selected");
             marathonClient = MesosMarathonClient.getInstanceWithBasicAuth(marathonEndpoint, marathonUsername, marathonPassword);
             log.info("[***TESTING] > > > Marathon Client created with Basic Auth Successfully");
-        } else if (marathonAuthMode.equals("Token")) {
+        } else if (MARATHON_TOKEN_AUTHENTICATION_MODE.equals(marathonAuthMode)) {
             log.info("[***TESTING] > > > Marathon Auth Mode : Token Auth Selected");
             MesosIAM mesosIAMClient = MesosIAMClient.getInstance(mesosIAMEndpoint);
             log.info("[***TESTING] > > > IAM Client created Successfully");
