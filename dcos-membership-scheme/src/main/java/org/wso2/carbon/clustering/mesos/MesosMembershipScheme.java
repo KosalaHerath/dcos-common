@@ -72,6 +72,7 @@ import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_ENDPOINT;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_LOGIN_TOKEN;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_PASSWORD;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_USERNAME;
+import static org.wso2.carbon.clustering.mesos.MesosConstants.MARATHON_USER_ID;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MESOS_DNS_DISCOVERY_SCHEME;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MESOS_DNS_ENDPOINT;
 import static org.wso2.carbon.clustering.mesos.MesosConstants.MESOS_IAM_ENDPOINT;
@@ -95,6 +96,7 @@ public class MesosMembershipScheme implements HazelcastMembershipScheme {
     private List<String> marathonAppIdList;
     private String memberDiscoveryScheme;
     private String marathonEndpoint;
+    private String marathonUserId;
     private String marathonUsername;
     private String marathonPassword;
     private String marathonLoginToken;
@@ -241,7 +243,7 @@ public class MesosMembershipScheme implements HazelcastMembershipScheme {
             log.info("[***TESTING] > > > Marathon Auth Mode : Token Auth Selected");
             MesosIAM mesosIAMClient = MesosIAMClient.getInstance(mesosIAMEndpoint);
             log.info("[***TESTING] > > > IAM Client created Successfully");
-            String token = mesosIAMClient.getToken(new Credentials(marathonUsername, marathonLoginToken)).getToken();
+            String token = mesosIAMClient.getToken(new Credentials(marathonUserId, marathonLoginToken)).getToken();
             log.info(String.format("[***TESTING] > > > IAM Token : %s", token));
             marathonClient = MesosMarathonClient.getInstanceWithTokenAuth(marathonEndpoint, token);
             log.info("[***TESTING] > > > Marathon Client created with Token Auth Successfully");
@@ -356,6 +358,7 @@ public class MesosMembershipScheme implements HazelcastMembershipScheme {
         memberDiscoveryScheme = getParameterValue(MESOS_MEMBER_DISCOVERY_SCHEME, MESOS_MARATHON_DISCOVERY_SCHEME);
         marathonEndpoint = getParameterValue(MARATHON_ENDPOINT, DEFAULT_MARATHON_ENDPOINT);
         marathonAuthMode = getParameterValue(MARATHON_AUTHENTICATION_MODE, DEFAULT_MARATHON_AUTHENTICATION_MODE);
+        marathonUserId = getParameterValue(MARATHON_USER_ID, "");
         marathonUsername = getParameterValue(MARATHON_USERNAME, "");
         marathonPassword = getParameterValue(MARATHON_PASSWORD, "");
         marathonLoginToken = getParameterValue(MARATHON_LOGIN_TOKEN, "");
@@ -389,7 +392,7 @@ public class MesosMembershipScheme implements HazelcastMembershipScheme {
                 "Mesos clustering membership scheme configuration: [App-List] %s, [Local-AppId] %s, " + "[Discovery-Scheme] %s",
                 marathonAppIdList, localAppId, memberDiscoveryScheme));
         log.info(String.format("[***TESTING] > > > [Mesos clustering membership scheme configuration: " +
-                "[Marathon-Auth-Mode] %s, [Marathon-Logging-Token] %s", marathonAuthMode, marathonLoginToken));
+                "[Marathon-Auth-Mode] %s, [Service-Account-Id] %s, [Service-Logging-Token] %s", marathonAuthMode, marathonUserId, marathonLoginToken));
     }
 
     private String getParameterValue(String key, String def) {

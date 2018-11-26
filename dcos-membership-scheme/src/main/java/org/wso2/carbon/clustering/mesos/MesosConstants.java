@@ -20,6 +20,7 @@ public class MesosConstants {
     public static final String CONNECTION_TIMEOUT = "connTimeout";
     public static final String MARATHON_ENDPOINT = "MARATHON_ENDPOINT";
     public static final String MARATHON_APPLICATIONS = "MARATHON_APPLICATIONS";
+    public static final String MARATHON_USER_ID = "MARATHON_USERNAME_ID";
     public static final String MARATHON_USERNAME = "MARATHON_USERNAME";
     public static final String MARATHON_PASSWORD = "MARATHON_PASSWORD";
     public static final String MARATHON_LOGIN_TOKEN = "MARATHON_LOGIN_TOKEN";
